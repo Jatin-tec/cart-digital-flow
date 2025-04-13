@@ -26,9 +26,41 @@ interface CartContextType {
 // Create context
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Sample dummy data for testing
+const dummyCartItems: CartItem[] = [
+  {
+    id: "1",
+    name: "Organic Bananas",
+    price: 1.99,
+    quantity: 2,
+    image: "https://images.unsplash.com/photo-1543218024-57a70143c369?q=80&w=200",
+  },
+  {
+    id: "2",
+    name: "Whole Milk",
+    price: 3.49,
+    quantity: 1,
+    image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?q=80&w=200",
+  },
+  {
+    id: "3",
+    name: "Wheat Bread",
+    price: 2.29,
+    quantity: 1,
+    image: "https://images.unsplash.com/photo-1549931319-a545dcf3bc7b?q=80&w=200",
+  },
+  {
+    id: "4",
+    name: "Avocado",
+    price: 1.49,
+    quantity: 3,
+    image: "https://images.unsplash.com/photo-1601039641847-7857b994d704?q=80&w=200",
+  },
+];
+
 // Create provider component
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(dummyCartItems); // Initialize with dummy data
   const [removeMode, setRemoveMode] = useState(false);
 
   const addItem = (newItem: CartItem) => {

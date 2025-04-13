@@ -1,9 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
+import RemoveItemModal from "./RemoveItemModal";
 
 interface CartItemListProps {
   viewOnly?: boolean;
@@ -11,6 +12,18 @@ interface CartItemListProps {
 
 const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
   const { items, removeItem, updateQuantity, removeMode } = useCart();
+  const [itemToRemove, setItemToRemove] = useState<{id: string, name: string} | null>(null);
+
+  const handleRemoveClick = (id: string, name: string) => {
+    setItemToRemove({ id, name });
+  };
+
+  const handleConfirmRemove = () => {
+    if (itemToRemove) {
+      removeItem(itemToRemove.id);
+      setItemToRemove(null);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -71,12 +84,12 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
                 {formatCurrency(item.price * item.quantity)}
               </span>
               
-              {!viewOnly && removeMode && (
+              {!viewOnly && (
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6 rounded-full text-error"
-                  onClick={() => removeItem(item.id)}
+                  onClick={() => handleRemoveClick(item.id, item.name)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -85,6 +98,16 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
           </div>
         ))}
       </div>
+
+      {itemToRemove && (
+        <RemoveItemModal
+          isOpen={itemToRemove !== null}
+          onClose={() => setItemToRemove(null)}
+          onConfirmRemove={handleConfirmRemove}
+          productId={itemToRemove.id}
+          productName={itemToRemove.name}
+        />
+      )}
     </div>
   );
 };
