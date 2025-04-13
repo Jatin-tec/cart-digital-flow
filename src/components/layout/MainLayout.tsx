@@ -17,14 +17,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ requiredRole }) => {
     if (!isAuthenticated && requiredRole) {
       const path = window.location.pathname;
       
-      // Auto-login based on the path
-      if (path.startsWith('/customer')) {
-        login("customer", "Customer User", "CART-123");
-      } else if (path.startsWith('/cart')) {
+      // Auto-login based on the path (but only for cart and admin, not customer)
+      if (path.startsWith('/cart')) {
         login("cart", "Cart Screen", `CART-${Math.floor(100 + Math.random() * 900)}`);
       } else if (path.startsWith('/admin')) {
         login("admin", "Admin User");
       }
+      // Customer role now uses the login page
     }
   }, [isAuthenticated, requiredRole, login]);
 
@@ -36,6 +35,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ requiredRole }) => {
   // Check if user is authenticated after the auto-login effect
   if (!isAuthenticated || !user) {
     console.log("User not authenticated, should have auto-logged in by now");
+    // If customer role, redirect to login page
+    if (typeof requiredRole === 'string' && requiredRole === 'customer') {
+      return <Navigate to="/login" />;
+    }
     return <Navigate to="/" />;
   }
 

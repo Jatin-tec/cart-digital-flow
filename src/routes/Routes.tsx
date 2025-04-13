@@ -4,6 +4,7 @@ import { Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 
 // Customer PWA screens
+import CustomerLogin from "@/pages/customer/Login"; // Add the login page
 import Welcome from "@/pages/customer/Welcome";
 import Connected from "@/pages/customer/Connected";
 import Shopping from "@/pages/customer/Shopping";
@@ -29,6 +30,9 @@ const Routes: React.FC = () => {
     <RouterRoutes>
       {/* Role selection (for demo purposes) */}
       <Route path="/" element={<RoleSelect />} />
+      
+      {/* Customer Login Page */}
+      <Route path="/login" element={<CustomerLogin />} />
       
       {/* Customer PWA routes */}
       <Route path="customer" element={<MainLayout requiredRole="customer" />}>

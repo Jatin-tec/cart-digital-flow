@@ -13,7 +13,8 @@ const RoleSelect: React.FC = () => {
   const handleRoleSelect = (role: UserRole) => {
     switch (role) {
       case "customer":
-        navigate("/customer/welcome");
+        // Navigate to login page instead of auto-logging in
+        navigate("/login");
         break;
       case "cart":
         login("cart", "Cart Screen", `CART-${Math.floor(100 + Math.random() * 900)}`);
