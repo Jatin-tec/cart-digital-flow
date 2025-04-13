@@ -4,7 +4,7 @@ import { Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 
 // Customer PWA screens
-import CustomerLogin from "@/pages/customer/Login"; // Add the login page
+import Login from "@/pages/Login"; // Add the login page
 import Welcome from "@/pages/customer/Welcome";
 import Connected from "@/pages/customer/Connected";
 import Shopping from "@/pages/customer/Shopping";
@@ -16,7 +16,6 @@ import CartStartup from "@/pages/cart/CartStartup";
 import CartLoggedIn from "@/pages/cart/CartLoggedIn";
 
 // Admin Dashboard screens
-import Login from "@/pages/admin/Login";
 import Dashboard from "@/pages/admin/Dashboard";
 import CartMonitor from "@/pages/admin/CartMonitor";
 import InventoryManagement from "@/pages/admin/InventoryManagement";
@@ -32,7 +31,7 @@ const Routes: React.FC = () => {
       <Route path="/" element={<RoleSelect />} />
       
       {/* Customer Login Page */}
-      <Route path="/login" element={<CustomerLogin />} />
+      <Route path="/login" element={<Login />} />
       
       {/* Customer PWA routes */}
       <Route path="customer" element={<MainLayout requiredRole="customer" />}>
@@ -45,7 +44,7 @@ const Routes: React.FC = () => {
       </Route>
       
       {/* Cart Interface routes */}
-      <Route path="cart" element={<MainLayout requiredRole="cart" />}>
+      <Route path="cart" element={<MainLayout requiredRole="customer" />}>
         <Route index element={<Navigate to="/cart/startup" />} />
         <Route path="startup" element={<CartStartup />} />
         <Route path="logged-in" element={<CartLoggedIn />} />
@@ -53,8 +52,7 @@ const Routes: React.FC = () => {
       
       {/* Admin Dashboard routes */}
       <Route path="admin" element={<MainLayout requiredRole="admin" />}>
-        <Route index element={<Navigate to="/admin/login" />} />
-        <Route path="login" element={<Login />} />
+        <Route index element={<Navigate to="/dashboard" />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="carts" element={<CartMonitor />} />
         <Route path="inventory" element={<InventoryManagement />} />

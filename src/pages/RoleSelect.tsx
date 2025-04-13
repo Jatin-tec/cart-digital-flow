@@ -8,20 +8,14 @@ import { Smartphone, ShoppingCart, LayoutDashboard } from "lucide-react";
 
 const RoleSelect: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
-  
+
   const handleRoleSelect = (role: UserRole) => {
     switch (role) {
       case "customer":
-        // Navigate to login page instead of auto-logging in
         navigate("/login");
         break;
-      case "cart":
-        login("cart", "Cart Screen", `CART-${Math.floor(100 + Math.random() * 900)}`);
-        navigate("/cart/startup");
-        break;
       case "admin":
-        navigate("/admin/login");
+        navigate("/login");
         break;
     }
   };
@@ -61,7 +55,7 @@ const RoleSelect: React.FC = () => {
             </Button>
 
             <Button
-              onClick={() => handleRoleSelect("cart")}
+              onClick={() => handleRoleSelect("customer")}
               variant="outline"
               className="h-auto flex flex-col items-center p-6 border-2 hover:border-primary"
             >

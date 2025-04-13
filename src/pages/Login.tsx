@@ -10,10 +10,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
 import { UserRole } from "@/contexts/AuthContext";
 
+
 // Dummy users for testing
 const DUMMY_USERS = [
-  { email: "customer@example.com", password: "customer", name: "John Customer", role: "customer" as UserRole, cartId: "CART-123" },
-  { email: "cart@example.com", password: "cart", name: "Cart Display", role: "cart" as UserRole, cartId: "CART-456" },
+  { email: "customer@example.com", password: "customer", name: "John Customer", role: "customer" as UserRole },
+  { email: "customercart@example.com", password: "cart", name: "Cart Display", role: "customer" as UserRole, cartId: "CART-456" },
   { email: "admin@example.com", password: "admin", name: "Admin User", role: "admin" as UserRole },
 ];
 
@@ -31,22 +32,20 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     // Find user from dummy data
-    const user = DUMMY_USERS.find(
-      (u) => u.email === email && u.password === password
-    );
+    const user = DUMMY_USERS.find((u) => u.email === email && u.password === password);
 
     setTimeout(() => {
       if (user) {
         // Log in with the found user's role
         login(user.role, user.name, user.cartId);
-        
         // Navigate based on role
         switch (user.role) {
           case "customer":
-            navigate("/customer/welcome");
-            break;
-          case "cart":
-            navigate("/cart/startup");
+            if (user.cartId) {
+              navigate("/cart")
+              break
+            };
+            navigate("/customer")
             break;
           case "admin":
             navigate("/admin/dashboard");
@@ -56,7 +55,7 @@ const Login: React.FC = () => {
         setError("Invalid email or password");
       }
       setIsLoading(false);
-    }, 1000); // Simulate API call delay
+    }, 1000);
   };
 
   return (
@@ -100,20 +99,20 @@ const Login: React.FC = () => {
                 required
               />
             </div>
-            
+
             <div className="text-sm text-gray-500 mt-2">
               <p>Demo Credentials:</p>
               <ul className="list-disc pl-5">
                 <li>Customer: customer@example.com / customer</li>
-                <li>Cart: cart@example.com / cart</li>
+                <li>Cart: customercart@example.com / cart</li>
                 <li>Admin: admin@example.com / admin</li>
               </ul>
             </div>
           </form>
         </CardContent>
         <CardFooter>
-          <Button 
-            className="w-full" 
+          <Button
+            className="w-full"
             onClick={handleSubmit}
             disabled={isLoading}
           >

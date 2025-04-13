@@ -1,8 +1,8 @@
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
 // Define user roles
-export type UserRole = "customer" | "cart" | "admin" | "none";
+export type UserRole = "customer" | "admin" | "none";
 
 // Define user interface
 interface User {
@@ -54,8 +54,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 // Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (context === undefined) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
