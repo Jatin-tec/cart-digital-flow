@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
-import { Trash2 } from "lucide-react";
+import { Trash2, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import RemoveItemModal from "./RemoveItemModal";
@@ -52,7 +52,18 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
             key={item.id}
             className="grid grid-cols-12 gap-2 px-4 py-3 items-center"
           >
-            <div className="col-span-5 flex items-center">
+            <div className="col-span-5 flex items-center space-x-3">
+              {item.image ? (
+                <img 
+                  src={item.image} 
+                  alt={item.name} 
+                  className="w-12 h-12 object-cover rounded-md"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-neutral-light flex items-center justify-center rounded-md">
+                  <Image className="text-gray-400" />
+                </div>
+              )}
               <div className="text-sm font-medium">{item.name}</div>
             </div>
             <div className="col-span-3 text-right">
@@ -113,3 +124,4 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
 };
 
 export default CartItemList;
+
