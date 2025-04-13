@@ -9,15 +9,33 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ requiredRole }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, login } = useAuth();
+
+  // For development purposes, auto-login based on the URL path
+  React.useEffect(() => {
+    // If not authenticated and we're trying to access a protected route
+    if (!isAuthenticated && requiredRole) {
+      const path = window.location.pathname;
+      
+      // Auto-login based on the path
+      if (path.startsWith('/customer')) {
+        login("customer", "Customer User", "CART-123");
+      } else if (path.startsWith('/cart')) {
+        login("cart", "Cart Screen", `CART-${Math.floor(100 + Math.random() * 900)}`);
+      } else if (path.startsWith('/admin')) {
+        login("admin", "Admin User");
+      }
+    }
+  }, [isAuthenticated, requiredRole, login]);
 
   // If no role is required, render the outlet
   if (!requiredRole) {
     return <Outlet />;
   }
 
-  // Check if user is authenticated
+  // Check if user is authenticated after the auto-login effect
   if (!isAuthenticated || !user) {
+    console.log("User not authenticated, should have auto-logged in by now");
     return <Navigate to="/" />;
   }
 
@@ -28,6 +46,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ requiredRole }) => {
 
   if (!hasRequiredRole) {
     // Redirect to appropriate page based on user role
+    console.log(`User role ${user.role} doesn't match required role ${requiredRole}`);
     switch (user.role) {
       case "customer":
         return <Navigate to="/customer" />;
