@@ -1,7 +1,7 @@
 
 // Sample product database for our Smart Cart system
 export interface Product {
-  id: string;
+  product_id: string;
   name: string;
   price: number;
   image?: string;
@@ -94,8 +94,17 @@ const products: Product[] = [
 ];
 
 // Get all products
-export const getAllProducts = (): Product[] => {
-  return products;
+export const getAllProducts = async (): Promise<Product[]> => {
+  const url = `${import.meta.env.VITE_API_HOST}/api/product/`
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  });
+  const data = await response.json();
+  console.log(data)
+  return data;
 };
 
 // Get product by barcode
@@ -112,8 +121,8 @@ export const getProductById = (id: string): Product | undefined => {
 export const searchProducts = (query: string): Product[] => {
   const lowercaseQuery = query.toLowerCase();
   return products.filter(
-    product => 
-      product.name.toLowerCase().includes(lowercaseQuery) || 
+    product =>
+      product.name.toLowerCase().includes(lowercaseQuery) ||
       product.category.toLowerCase().includes(lowercaseQuery)
   );
 };

@@ -1,22 +1,25 @@
-
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 // Define user roles
-export type UserRole = "customer" | "admin" | "none";
+export type UserRole = "customer" | "admin";
 
 // Define user interface
 interface User {
-  id: string;
-  name: string;
-  role: UserRole;
-  cartId?: string;
+  user: {
+    email: string,
+    role: UserRole
+  }
+  tokens: {
+    access: string,
+    refresh: string
+  }
 }
 
 // Define context interface
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (role: UserRole, name?: string, cartId?: string) => void;
+  login: (email: string, password: string) => Promise<User | null>
   logout: () => void;
 }
 
@@ -27,14 +30,29 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  const login = (role: UserRole, name: string = "Guest", cartId?: string) => {
-    const userId = Math.random().toString(36).substring(2, 9);
-    setUser({
-      id: userId,
-      name,
-      role,
-      cartId,
-    });
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    console.log(storedUser, 'storedUser')
+    if (storedUser) setUser(JSON.parse(storedUser));
+  }, [])
+
+  const login = async (email: string, password: string) => {
+    try {
+      const url = `${import.meta.env.VITE_API_HOST}/api/user/login/`
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      localStorage.setItem('user', JSON.stringify(data))
+      setUser(data)
+      return data
+    } catch {
+      return null
+    }
   };
 
   const logout = () => {

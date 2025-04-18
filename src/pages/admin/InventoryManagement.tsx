@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +22,20 @@ import { formatCurrency } from "@/lib/utils";
 
 const InventoryManagement: React.FC = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>(getAllProducts());
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      setProducts(await getAllProducts())
+    })()
+  })
+
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    
+
     if (query.trim() === "") {
       setProducts(getAllProducts());
     } else {
@@ -45,7 +52,7 @@ const InventoryManagement: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-neutral-light">
       <header className="bg-neutral-dark text-white shadow">
-        <div className="max-w-7xl mx-auto py-4 px-6 flex items-center">
+        <div className="w-[1500px] mx-auto py-4 px-6 flex items-center">
           <Button
             variant="ghost"
             size="icon"
@@ -58,30 +65,31 @@ const InventoryManagement: React.FC = () => {
         </div>
       </header>
 
-      <main className="flex-1 p-6 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 space-y-4 md:space-y-0">
-          <h2 className="text-2xl font-bold">Product Catalog</h2>
-          
-          <div className="flex space-x-2">
+      <main className="flex-1 p-6 w-[1400px] mx-auto">
+        <div className="flex flex-col justify-between mb-6 space-y-4">
+          <h2 className="text-2xl font-bold text-left">Product Catalog</h2>
+
+          <div className="flex space-x-2 justify-between">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={handleSearch}
-                className="pl-9 w-full md:w-64"
+                className="pl-9 w-[450px]"
               />
             </div>
-            
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Product
-            </Button>
-            
-            <Button variant="outline">
-              <Upload className="mr-2 h-4 w-4" />
-              Import CSV
-            </Button>
+              <div className="flex gap-3">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Product
+                </Button>
+
+                <Button variant="outline">
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import CSV
+                </Button>
+              </div>
           </div>
         </div>
 
@@ -116,10 +124,10 @@ const InventoryManagement: React.FC = () => {
                   </tr>
                 ) : (
                   products.map((product) => (
-                    <tr key={product.id}>
+                    <tr key={product.product_id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 rounded overflow-hidden bg-gray-100">
+                          <div className="flex-shrink-0 h-20 w-20 rounded overflow-hidden bg-gray-100">
                             {product.image ? (
                               <img
                                 src={product.image}
@@ -133,11 +141,11 @@ const InventoryManagement: React.FC = () => {
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-md font-bold text-gray-900">
                               {truncateText(product.name, 30)}
                             </div>
                             <div className="text-sm text-gray-500">
-                              ID: {product.id}
+                              ID: {product.product_id}
                             </div>
                           </div>
                         </div>

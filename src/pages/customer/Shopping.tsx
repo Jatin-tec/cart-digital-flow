@@ -46,7 +46,7 @@ const Shopping: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-4 flex justify-between items-center">
-          <h1 className="text-xl font-semibold text-gray-900">Smart Cart</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Qout</h1>
           <div className="text-sm text-gray-600">Cart #{user?.cartId}</div>
         </div>
       </header>

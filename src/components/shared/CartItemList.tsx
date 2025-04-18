@@ -70,7 +70,7 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
               {formatCurrency(item.price)}
             </div>
             <div className="col-span-2 flex justify-center items-center space-x-1">
-              {!viewOnly && (
+              {/* {!viewOnly && (
                 <button
                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
                   disabled={removeMode}
@@ -78,9 +78,9 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
                 >
                   -
                 </button>
-              )}
+              )} */}
               <span className="w-6 text-center">{item.quantity}</span>
-              {!viewOnly && (
+              {/* {!viewOnly && (
                 <button
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
                   disabled={removeMode}
@@ -88,7 +88,7 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
                 >
                   +
                 </button>
-              )}
+              )} */}
             </div>
             <div className="col-span-2 flex items-center justify-end space-x-2">
               <span className="font-medium">

@@ -8,15 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
-import { UserRole } from "@/contexts/AuthContext";
-
 
 // Dummy users for testing
-const DUMMY_USERS = [
-  { email: "customer@example.com", password: "customer", name: "John Customer", role: "customer" as UserRole },
-  { email: "customercart@example.com", password: "cart", name: "Cart Display", role: "customer" as UserRole, cartId: "CART-456" },
-  { email: "admin@example.com", password: "admin", name: "Admin User", role: "admin" as UserRole },
-];
+// const DUMMY_USERS = [
+//   { email: "customer@example.com", password: "customer", name: "John Customer", role: "customer" as UserRole },
+//   { email: "customercart@example.com", password: "cart", name: "Cart Display", role: "cart" as UserRole, cartId: "CART-456" },
+//   { email: "admin@example.com", password: "admin", name: "Admin User", role: "admin" as UserRole },
+// ];
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -26,36 +24,29 @@ const Login: React.FC = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
-    // Find user from dummy data
-    const user = DUMMY_USERS.find((u) => u.email === email && u.password === password);
-
-    setTimeout(() => {
-      if (user) {
-        // Log in with the found user's role
-        login(user.role, user.name, user.cartId);
-        // Navigate based on role
-        switch (user.role) {
-          case "customer":
-            if (user.cartId) {
-              navigate("/cart")
-              break
-            };
-            navigate("/customer")
-            break;
-          case "admin":
-            navigate("/admin/dashboard");
-            break;
-        }
-      } else {
-        setError("Invalid email or password");
+    const response = await login(email, password);
+    console.log(response)
+    if (response) {
+      switch (response.user.role) {
+        case "customer":
+          // if (user.cartId) {
+          //   navigate("/cart")
+          //   break
+          // };
+          navigate("/customer")
+          break;
+        case "admin":
+          console.log(response.user.role)
+          navigate("/admin/dashboard");
+          break;
       }
-      setIsLoading(false);
-    }, 1000);
+    } else {
+      setError("Invalid email or password");
+    }
   };
 
   return (

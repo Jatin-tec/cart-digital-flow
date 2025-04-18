@@ -13,14 +13,17 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAssistance } from "@/contexts/AssistanceContext";
+import Chart from "./Chart";
+import Pchart from "./Pchart";
+
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { requests } = useAssistance();
-  
+
   const activeRequests = requests.filter((req) => !req.resolved);
-  
+
   // Mock data for dashboard
   const activeCarts = 12;
   const idleCarts = 3;
@@ -35,7 +38,7 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-neutral-light">
       <header className="bg-neutral-dark text-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-6 flex justify-between items-center">
-          <h1 className="text-xl font-semibold">Smart Cart Admin</h1>
+          <h1 className="text-xl font-semibold">Qout Admin</h1>
           <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             Logout
@@ -120,13 +123,7 @@ const Dashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
-            <h3 className="font-medium mb-4 flex items-center">
-              <Map className="mr-2 h-5 w-5 text-primary" />
-              Store Activity Map
-            </h3>
-            <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
-              <p className="text-gray-500">Store map visualization goes here</p>
-            </div>
+            <Pchart/>
           </div>
 
           <div className="bg-white rounded-lg shadow p-6">
@@ -164,6 +161,11 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <div className="py-3 w-full">
+          <Chart />
+        </div>
+
       </main>
     </div>
   );
