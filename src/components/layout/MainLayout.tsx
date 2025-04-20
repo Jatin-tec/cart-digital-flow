@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Outlet, Navigate } from "react-router-dom";
@@ -9,34 +8,37 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ requiredRole }) => {
-  // const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
 
-  // console.log(user, isAuthenticated, "main layout")
+  console.log(user, isAuthenticated, "main layout");
 
-  // // If no role is required, render the outlet
-  // if (!requiredRole) return <Outlet />;
+  // Wait for the loading state to complete before rendering
+  if (loading) return <div>Loading...</div>;
 
-  // // Check if user is authenticated after the auto-login effect
-  // if (!user || !isAuthenticated) return <Navigate to="/login" />;
+  // If no role is required, render the outlet
+  if (!requiredRole) return <Outlet />;
 
-  // // Check if user has required role
-  // const hasRequiredRole = Array.isArray(requiredRole)
-  //   ? requiredRole.includes(user.user.role)
-  //   : user.user.role === requiredRole;
+  // Check if user is authenticated after the auto-login effect
+  if (!user || !isAuthenticated) return <Navigate to="/login" />;
 
-  // if (!hasRequiredRole) {
-  //   // Redirect to appropriate page based on user role
-  //   console.log(`User role ${user.user.role} doesn't match required role ${requiredRole}`);
-  //   switch (user.user.role) {
-  //     case "customer":
-  //       // if (user.cartId) return <Navigate to="/cart" />;
-  //       return <Navigate to="/customer" />;
-  //     case "admin":
-  //       return <Navigate to="/admin" />;
-  //     default:
-  //       return <Navigate to="/login" />;
-  //   }
-  // }
+  // Check if user has required role
+  const hasRequiredRole = Array.isArray(requiredRole)
+    ? requiredRole.includes(user?.user?.role)
+    : user?.user?.role === requiredRole;
+
+  if (!hasRequiredRole) {
+    // Redirect to appropriate page based on user role
+    console.log(`User role ${user?.user?.role} doesn't match required role ${requiredRole}`);
+    switch (user?.user?.role) {
+      case "customer":
+        // if (user.cartId) return <Navigate to="/cart" />;
+        return <Navigate to="/customer" />;
+      case "manager":
+        return <Navigate to="/admin" />;
+      default:
+        return <Navigate to="/login" />;
+    }
+  }
 
   return <Outlet />;
 };

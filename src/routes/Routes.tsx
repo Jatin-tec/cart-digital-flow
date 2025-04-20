@@ -51,7 +51,7 @@ const Routes: React.FC = () => {
       </Route>
       
       {/* Admin Dashboard routes */}
-      <Route path="admin" element={<MainLayout requiredRole="admin" />}>
+      <Route path="admin" element={<MainLayout requiredRole="manager" />}>
         <Route index element={<Navigate to="/dashboard" />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="carts" element={<CartMonitor />} />

@@ -11,7 +11,7 @@ const Welcome: React.FC = () => {
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const handleScanComplete = (result: string) => {
@@ -22,10 +22,6 @@ const Welcome: React.FC = () => {
     setTimeout(() => {
       // Get cart ID from the QR code (format: CART-123)
       const cartId = result;
-      
-      // Log in the user as a customer with the scanned cart ID
-      login("customer", "Customer", cartId);
-
       // Show success toast
       toast({
         title: "Connected successfully",

@@ -9,7 +9,7 @@ const Connected: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const cartId = user?.cartId || location.state?.cartId || "Unknown";
+  const cartId = user?.cart?.cartId || location.state?.cartId || "Unknown";
 
   const handleStartShopping = () => {
     navigate("/customer/shopping");

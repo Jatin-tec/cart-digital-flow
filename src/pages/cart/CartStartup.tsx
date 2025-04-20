@@ -9,12 +9,10 @@ import {QRCodeSVG} from 'qrcode.react';
 const uniqueId = Math.floor(100 + Math.random() * 900);
 
 const CartStartup: React.FC = () => {
-  const { login } = useAuth();
+
   // const [qrCode, setQrCode] = useState<string>("")
   
   const cartId = `CART-${uniqueId}`;
-
-  login("cart", "Cart Screen", cartId);
 
   // In a real app, this would generate an actual QR code
   // For this demo, we'll just show the cart ID

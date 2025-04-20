@@ -14,7 +14,7 @@ const RoleSelect: React.FC = () => {
       case "customer":
         navigate("/login");
         break;
-      case "admin":
+      case "manager":
         navigate("/login");
         break;
     }
@@ -69,7 +69,7 @@ const RoleSelect: React.FC = () => {
             </Button>
 
             <Button
-              onClick={() => handleRoleSelect("admin")}
+              onClick={() => handleRoleSelect("manager")}
               variant="outline"
               className="h-auto flex flex-col items-center p-6 border-2 hover:border-primary"
             >

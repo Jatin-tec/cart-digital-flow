@@ -29,17 +29,16 @@ const InventoryManagement: React.FC = () => {
     (async () => {
       setProducts(await getAllProducts())
     })()
-  })
+  }, [])
 
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-
     if (query.trim() === "") {
-      setProducts(getAllProducts());
+      setProducts(await getAllProducts());
     } else {
-      setProducts(searchProducts(query));
+      setProducts(await searchProducts(query));
     }
   };
 
@@ -79,17 +78,17 @@ const InventoryManagement: React.FC = () => {
                 className="pl-9 w-[450px]"
               />
             </div>
-              <div className="flex gap-3">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Product
-                </Button>
+            <div className="flex gap-3">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Product
+              </Button>
 
-                <Button variant="outline">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Import CSV
-                </Button>
-              </div>
+              <Button variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Import CSV
+              </Button>
+            </div>
           </div>
         </div>
 

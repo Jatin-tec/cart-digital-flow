@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 // Define user roles
-export type UserRole = "customer" | "admin";
+export type UserRole = "customer" | "admin" | "manager";
 
 // Define user interface
 interface User {
@@ -13,6 +13,9 @@ interface User {
     access: string,
     refresh: string
   }
+  cart ?: {
+    cartId: string
+  }
 }
 
 // Define context interface
@@ -21,6 +24,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<User | null>
   logout: () => void;
+  loading: boolean;
+  cart?: {
+    cartId: string
+  };
 }
 
 // Create context
@@ -29,12 +36,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Create provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    console.log(storedUser, 'storedUser')
+    console.log(storedUser, 'storedUser');
     if (storedUser) setUser(JSON.parse(storedUser));
-  }, [])
+    setLoading(false); // Set loading to false after checking local storage
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
@@ -64,6 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAuthenticated: !!user,
     login,
     logout,
+    loading, // Expose the loading state
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

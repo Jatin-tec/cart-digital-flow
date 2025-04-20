@@ -9,13 +9,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
 
-// Dummy users for testing
-// const DUMMY_USERS = [
-//   { email: "customer@example.com", password: "customer", name: "John Customer", role: "customer" as UserRole },
-//   { email: "customercart@example.com", password: "cart", name: "Cart Display", role: "cart" as UserRole, cartId: "CART-456" },
-//   { email: "admin@example.com", password: "admin", name: "Admin User", role: "admin" as UserRole },
-// ];
-
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -39,8 +32,8 @@ const Login: React.FC = () => {
           // };
           navigate("/customer")
           break;
-        case "admin":
-          console.log(response.user.role)
+        case "manager":
+          console.log(response.user.role);
           navigate("/admin/dashboard");
           break;
       }

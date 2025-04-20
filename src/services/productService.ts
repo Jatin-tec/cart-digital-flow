@@ -1,5 +1,3 @@
-
-// Sample product database for our Smart Cart system
 export interface Product {
   product_id: string;
   name: string;
@@ -9,93 +7,36 @@ export interface Product {
   category: string;
 }
 
-// Sample product database
-const products: Product[] = [
-  {
-    id: "prod-001",
-    name: "Organic Bananas",
-    price: 1.99,
-    image: "https://images.unsplash.com/photo-1609042486535-f95641e71555?q=80&w=300",
-    barcode: "7890123456",
-    category: "Fruits",
-  },
-  {
-    id: "prod-002",
-    name: "Whole Milk",
-    price: 3.49,
-    image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?q=80&w=300",
-    barcode: "7890123457",
-    category: "Dairy",
-  },
-  {
-    id: "prod-003",
-    name: "Artisan Bread",
-    price: 4.99,
-    image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=300",
-    barcode: "7890123458",
-    category: "Bakery",
-  },
-  {
-    id: "prod-004",
-    name: "Fresh Salmon",
-    price: 12.99,
-    image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=300",
-    barcode: "7890123459",
-    category: "Seafood",
-  },
-  {
-    id: "prod-005",
-    name: "Avocado",
-    price: 1.49,
-    image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?q=80&w=300",
-    barcode: "7890123460",
-    category: "Fruits",
-  },
-  {
-    id: "prod-006",
-    name: "Chicken Breast",
-    price: 8.99,
-    image: "https://images.unsplash.com/photo-1644752589106-47c4fdfb22b9?q=80&w=300",
-    barcode: "7890123461",
-    category: "Meat",
-  },
-  {
-    id: "prod-007",
-    name: "Red Bell Pepper",
-    price: 1.29,
-    image: "https://images.unsplash.com/photo-1560806175-c5d67cc229cc?q=80&w=300",
-    barcode: "7890123462",
-    category: "Vegetables",
-  },
-  {
-    id: "prod-008",
-    name: "Pasta",
-    price: 2.49,
-    image: "https://images.unsplash.com/photo-1551462147-ff29053bfc14?q=80&w=300",
-    barcode: "7890123463",
-    category: "Dry Goods",
-  },
-  {
-    id: "prod-009",
-    name: "Orange Juice",
-    price: 3.99,
-    image: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?q=80&w=300",
-    barcode: "7890123464",
-    category: "Beverages",
-  },
-  {
-    id: "prod-010",
-    name: "Cereal",
-    price: 4.29,
-    image: "https://images.unsplash.com/photo-1610554779231-12e3c092e5e8?q=80&w=300",
-    barcode: "7890123465",
-    category: "Breakfast",
-  }
-];
-
 // Get all products
 export const getAllProducts = async (): Promise<Product[]> => {
   const url = `${import.meta.env.VITE_API_HOST}/api/product/`
+  const item = localStorage.getItem('user');
+  try {
+    console.log(item, 'item');
+    const user = JSON.parse(item);
+    if (!user) {
+      console.error('No user found in localStorage');
+      return [];
+    }
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user?.tokens.access}`
+      }
+    });
+    const data = await response.json();
+    console.log(data)
+    return data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+};
+
+// Get product by barcode
+export const getProductByBarcode = async (barcode: string): Promise<Product | undefined> => {
+  const url = `${import.meta.env.VITE_API_HOST}/api/product/${barcode}`
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -107,18 +48,9 @@ export const getAllProducts = async (): Promise<Product[]> => {
   return data;
 };
 
-// Get product by barcode
-export const getProductByBarcode = (barcode: string): Product | undefined => {
-  return products.find(product => product.barcode === barcode);
-};
-
-// Get product by ID
-export const getProductById = (id: string): Product | undefined => {
-  return products.find(product => product.id === id);
-};
-
 // Search products by name or category
-export const searchProducts = (query: string): Product[] => {
+export const searchProducts = async (query: string): Promise<Product[]> => {
+  const products = await getAllProducts();
   const lowercaseQuery = query.toLowerCase();
   return products.filter(
     product =>
@@ -128,6 +60,7 @@ export const searchProducts = (query: string): Product[] => {
 };
 
 // Get products by category
-export const getProductsByCategory = (category: string): Product[] => {
+export const getProductsByCategory = async (category: string): Promise<Product[]> => {
+  const products = await getAllProducts();
   return products.filter(product => product.category === category);
 };
