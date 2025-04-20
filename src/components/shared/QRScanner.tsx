@@ -45,8 +45,12 @@ const QRScanner: React.FC<QRScannerProps> = ({ isOpen, onClose, onScan }) => {
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (manualCodeValue.trim()) {
-      onScan(manualCodeValue);
+    // get the value from the input
+    const inputValue = (e.target as HTMLFormElement).elements[0].value;
+    console.log("Manual input value:", inputValue);
+
+    if (inputValue.trim()) {
+      onScan(inputValue);
     }
   };
 

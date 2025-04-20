@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { QrCode, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import QRScanner from "@/components/shared/QRScanner";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 
 const Welcome: React.FC = () => {
@@ -13,33 +12,18 @@ const Welcome: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
   const { user, startCartSession } = useAuth();
-  const { toast: useToastFn } = useToast();
 
-  const handleScanComplete = async (result: string) => {
+  const handleScanComplete = async (cartId: string) => {
     setIsQrScannerOpen(false);
     setIsConnecting(true);
 
     try {
-      // Extract cart ID from QR code result
-      // Expecting format like: https://qout.com/CART-123 or just CART-123
-      const cartIdMatch = result.match(/CART-(\d+)/);
-      if (!cartIdMatch) {
-        toast.error("Invalid QR code format");
-        setIsConnecting(false);
-        return;
-      }
-      
-      const cartId = cartIdMatch[0]; // Full CART-123 format
-      
       // Start a cart session
       const sessionResult = await startCartSession(cartId);
       
       if (sessionResult) {
         // Show success toast
-        useToastFn({
-          title: "Connected successfully",
-          description: `You are now connected to ${cartId}`,
-        });
+        toast.success(`You are now connected to ${cartId}`);
         
         // Navigate to the cart connected screen
         navigate("/customer/connected", { 
