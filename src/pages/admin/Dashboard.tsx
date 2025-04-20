@@ -14,6 +14,7 @@ import { useAssistance } from "@/contexts/AssistanceContext";
 import Chart from "./Chart";
 import Pchart from "./Pchart";
 import { DashboardMetrics, startRealtimeUpdates } from "@/services/dashboardService";
+import { ShoppingCart, BellRing } from "lucide-react";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
