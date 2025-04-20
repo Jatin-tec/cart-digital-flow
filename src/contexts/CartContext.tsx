@@ -1,5 +1,7 @@
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { useAuth, CartSession, CartSessionItem } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 // Define cart item interface
 export interface CartItem {
@@ -8,92 +10,157 @@ export interface CartItem {
   price: number;
   quantity: number;
   image?: string;
+  barcode: string;
 }
 
 // Define context interface
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: CartItem) => void;
-  removeItem: (itemId: string) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
+  addItem: (barcode: string, quantity: number) => Promise<boolean>;
+  removeItem: (barcode: string) => Promise<boolean>;
+  updateQuantity: (barcode: string, quantity: number) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
   removeMode: boolean;
   toggleRemoveMode: () => void;
+  refreshCartItems: () => Promise<void>;
+  loading: boolean;
 }
 
 // Create context
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Sample dummy data for testing
-const dummyCartItems: CartItem[] = [
-  {
-    id: "1",
-    name: "Organic Bananas",
-    price: 1.99,
-    quantity: 2,
-    image: "https://images.unsplash.com/photo-1543218024-57a70143c369?q=80&w=200",
-  },
-  {
-    id: "2",
-    name: "Whole Milk",
-    price: 3.49,
-    quantity: 1,
-    image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?q=80&w=200",
-  },
-  {
-    id: "3",
-    name: "Wheat Bread",
-    price: 2.29,
-    quantity: 1,
-    image: "https://images.unsplash.com/photo-1549931319-a545dcf3bc7b?q=80&w=200",
-  },
-  {
-    id: "4",
-    name: "Avocado",
-    price: 1.49,
-    quantity: 3,
-    image: "https://images.unsplash.com/photo-1601039641847-7857b994d704?q=80&w=200",
-  },
-];
-
 // Create provider component
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>(dummyCartItems); // Initialize with dummy data
+  const { user, getCurrentSession } = useAuth();
+  const [items, setItems] = useState<CartItem[]>([]);
   const [removeMode, setRemoveMode] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const addItem = (newItem: CartItem) => {
-    setItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === newItem.id);
-      
-      if (existingItem) {
-        // Update quantity if item already exists
-        return prevItems.map(item => 
-          item.id === newItem.id 
-            ? { ...item, quantity: item.quantity + newItem.quantity } 
-            : item
-        );
-      } else {
-        // Add new item
-        return [...prevItems, newItem];
+  // Fetch cart items when user or session changes
+  useEffect(() => {
+    if (user?.cart?.sessionId) {
+      refreshCartItems();
+    }
+  }, [user?.cart?.sessionId]);
+
+  // Refresh cart items from the API
+  const refreshCartItems = async () => {
+    if (!user?.cart?.sessionId) return;
+    
+    setLoading(true);
+    try {
+      const session = await getCurrentSession();
+      if (session) {
+        const cartItems = mapSessionItemsToCartItems(session.items);
+        setItems(cartItems);
       }
-    });
+    } catch (error) {
+      console.error("Error refreshing cart:", error);
+      toast.error("Failed to refresh cart items");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeItem = (itemId: string) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== itemId));
+  // Map API session items to cart items
+  const mapSessionItemsToCartItems = (sessionItems: CartSessionItem[]): CartItem[] => {
+    return sessionItems.map(item => ({
+      id: item.product.barcode.toString(),
+      barcode: item.product.barcode.toString(),
+      name: item.product.name,
+      price: parseFloat(item.product.price),
+      quantity: item.quantity,
+      image: item.product.image || undefined
+    }));
   };
 
-  const updateQuantity = (itemId: string, quantity: number) => {
+  // Add item to cart
+  const addItem = async (barcode: string, quantity: number = 1): Promise<boolean> => {
+    if (!user?.cart?.sessionId) {
+      toast.error("No active cart session");
+      return false;
+    }
+    
+    setLoading(true);
+    try {
+      const url = `${import.meta.env.VITE_API_HOST}/api/cart/session/${user.cart.sessionId}/add/`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.tokens.access}`
+        },
+        body: JSON.stringify({ barcode, quantity })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.detail || "Failed to add item to cart");
+        return false;
+      }
+      
+      await refreshCartItems();
+      toast.success("Item added to cart");
+      return true;
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
+      toast.error("Failed to add item to cart");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Remove item from cart
+  const removeItem = async (barcode: string): Promise<boolean> => {
+    if (!user?.cart?.sessionId) {
+      toast.error("No active cart session");
+      return false;
+    }
+    
+    setLoading(true);
+    try {
+      const url = `${import.meta.env.VITE_API_HOST}/api/cart/session/${user.cart.sessionId}/remove/`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.tokens.access}`
+        },
+        body: JSON.stringify({ barcode })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.detail || "Failed to remove item from cart");
+        return false;
+      }
+      
+      await refreshCartItems();
+      toast.success("Item removed from cart");
+      return true;
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+      toast.error("Failed to remove item from cart");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update quantity locally (will be replaced with API call when available)
+  const updateQuantity = (barcode: string, quantity: number) => {
     if (quantity <= 0) {
-      removeItem(itemId);
+      removeItem(barcode);
       return;
     }
     
+    // This is a local update only until we have an API endpoint for quantity updates
     setItems(prevItems => 
       prevItems.map(item => 
-        item.id === itemId 
+        item.barcode === barcode 
           ? { ...item, quantity } 
           : item
       )
@@ -122,6 +189,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     totalPrice,
     removeMode,
     toggleRemoveMode,
+    refreshCartItems,
+    loading
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

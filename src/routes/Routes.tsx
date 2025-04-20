@@ -3,8 +3,11 @@ import React from "react";
 import { Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 
+// Home and Authentication
+import Home from "@/pages/Home";
+import Login from "@/pages/Login";
+
 // Customer PWA screens
-import Login from "@/pages/Login"; // Add the login page
 import Welcome from "@/pages/customer/Welcome";
 import Connected from "@/pages/customer/Connected";
 import Shopping from "@/pages/customer/Shopping";
@@ -27,8 +30,11 @@ import RoleSelect from "@/pages/RoleSelect";
 const Routes: React.FC = () => {
   return (
     <RouterRoutes>
+      {/* Home page */}
+      <Route path="/" element={<Home />} />
+      
       {/* Role selection (for demo purposes) */}
-      <Route path="/" element={<RoleSelect />} />
+      <Route path="/select-role" element={<RoleSelect />} />
       
       {/* Customer Login Page */}
       <Route path="/login" element={<Login />} />
@@ -52,7 +58,7 @@ const Routes: React.FC = () => {
       
       {/* Admin Dashboard routes */}
       <Route path="admin" element={<MainLayout requiredRole="manager" />}>
-        <Route index element={<Navigate to="/dashboard" />} />
+        <Route index element={<Navigate to="/admin/dashboard" />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="carts" element={<CartMonitor />} />
         <Route path="inventory" element={<InventoryManagement />} />

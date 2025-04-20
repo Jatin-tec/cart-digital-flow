@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   Camera,
   Trash2,
   CreditCard,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -19,35 +20,81 @@ import AssistanceRequestModal from "@/components/shared/AssistanceRequestModal";
 import { getProductByBarcode } from "@/services/productService";
 import { Product } from "@/services/productService";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 
 const Shopping: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { totalItems, totalPrice, removeMode, toggleRemoveMode } = useCart();
+  const { 
+    totalItems, 
+    totalPrice, 
+    removeMode, 
+    toggleRemoveMode, 
+    addItem,
+    refreshCartItems,
+    loading: cartLoading 
+  } = useCart();
+  
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isAssistanceModalOpen, setIsAssistanceModalOpen] = useState(false);
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleScan = (barcode: string) => {
-    const product = getProductByBarcode(barcode);
-    if (product) {
-      setScannedProduct(product);
-      setIsProductModalOpen(true);
-    }
+  // Initial cart refresh when component mounts
+  useEffect(() => {
+    const loadCartData = async () => {
+      setIsRefreshing(true);
+      try {
+        await refreshCartItems();
+      } catch (error) {
+        console.error("Error refreshing cart data:", error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    };
+
+    loadCartData();
+  }, []);
+
+  const handleScan = async (barcode: string) => {
     setIsScannerOpen(false);
+    
+    try {
+      // First, try to add the item directly to cart
+      const added = await addItem(barcode, 1);
+      
+      if (added) {
+        // If successful, no need to show product details
+        return;
+      }
+      
+      // If adding to cart failed, try to get product details to show modal
+      const product = await getProductByBarcode(barcode);
+      if (product) {
+        setScannedProduct(product);
+        setIsProductModalOpen(true);
+      } else {
+        toast.error("Product not found");
+      }
+    } catch (error) {
+      console.error("Error scanning product:", error);
+      toast.error("Error scanning product");
+    }
   };
 
   const handleCheckout = () => {
     navigate("/customer/checkout");
   };
 
+  const cartId = user?.cart?.cartId || "Unknown";
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-4 flex justify-between items-center">
           <h1 className="text-xl font-semibold text-gray-900">Qout</h1>
-          <div className="text-sm text-gray-600">Cart #{user?.cartId}</div>
+          <div className="text-sm text-gray-600">Cart #{cartId}</div>
         </div>
       </header>
 
@@ -59,7 +106,12 @@ const Shopping: React.FC = () => {
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 <span className="font-medium">Your Cart</span>
               </div>
-              <div className="text-sm">{totalItems} items</div>
+              <div className="flex items-center">
+                {(isRefreshing || cartLoading) && (
+                  <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                )}
+                <span className="text-sm">{totalItems} items</span>
+              </div>
             </div>
 
             <div className="divide-y">
@@ -118,6 +170,7 @@ const Shopping: React.FC = () => {
               variant="outline"
               className="flex items-center justify-center h-12"
               onClick={() => setIsScannerOpen(true)}
+              disabled={cartLoading}
             >
               <Barcode className="mr-2 h-5 w-5" />
               Scan Item
@@ -126,7 +179,7 @@ const Shopping: React.FC = () => {
             <Button
               className="flex items-center justify-center h-12"
               onClick={handleCheckout}
-              disabled={totalItems === 0}
+              disabled={totalItems === 0 || cartLoading}
             >
               <CreditCard className="mr-2 h-5 w-5" />
               Checkout

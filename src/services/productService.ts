@@ -1,32 +1,39 @@
+
 export interface Product {
   product_id: string;
   name: string;
-  price: number;
+  price: string;
   image?: string;
-  barcode: string;
+  barcode: number;
   category: string;
+  description?: string;
+  weight?: string;
 }
 
 // Get all products
 export const getAllProducts = async (): Promise<Product[]> => {
-  const url = `${import.meta.env.VITE_API_HOST}/api/product/`
+  const url = `${import.meta.env.VITE_API_HOST}/api/product/`;
   const item = localStorage.getItem('user');
   try {
-    console.log(item, 'item');
-    const user = JSON.parse(item);
-    if (!user) {
-      console.error('No user found in localStorage');
+    const user = item ? JSON.parse(item) : null;
+    if (!user || !user.tokens) {
+      console.error('No user found in localStorage or invalid user data');
       return [];
     }
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user?.tokens.access}`
+        'Authorization': `Bearer ${user.tokens.access}`
       }
     });
+    
+    if (!response.ok) {
+      console.error('API error:', response.status, response.statusText);
+      return [];
+    }
+    
     const data = await response.json();
-    console.log(data)
     return data;
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -35,17 +42,15 @@ export const getAllProducts = async (): Promise<Product[]> => {
 };
 
 // Get product by barcode
-export const getProductByBarcode = async (barcode: string): Promise<Product | undefined> => {
-  const url = `${import.meta.env.VITE_API_HOST}/api/product/${barcode}`
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    }
-  });
-  const data = await response.json();
-  console.log(data)
-  return data;
+export const getProductByBarcode = async (barcode: string): Promise<Product | null> => {
+  try {
+    const products = await getAllProducts();
+    const product = products.find(p => p.barcode.toString() === barcode);
+    return product || null;
+  } catch (error) {
+    console.error('Error fetching product by barcode:', error);
+    return null;
+  }
 };
 
 // Search products by name or category

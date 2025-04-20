@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
-import { Trash2, Image } from "lucide-react";
+import { Trash2, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import RemoveItemModal from "./RemoveItemModal";
@@ -11,19 +11,33 @@ interface CartItemListProps {
 }
 
 const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
-  const { items, removeItem, updateQuantity, removeMode } = useCart();
-  const [itemToRemove, setItemToRemove] = useState<{id: string, name: string} | null>(null);
+  const { items, removeItem, updateQuantity, removeMode, loading } = useCart();
+  const [itemToRemove, setItemToRemove] = useState<{id: string, name: string, barcode: string} | null>(null);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
 
-  const handleRemoveClick = (id: string, name: string) => {
-    setItemToRemove({ id, name });
+  const handleRemoveClick = (id: string, name: string, barcode: string) => {
+    setItemToRemove({ id, name, barcode });
   };
 
-  const handleConfirmRemove = () => {
+  const handleConfirmRemove = async () => {
     if (itemToRemove) {
-      removeItem(itemToRemove.id);
-      setItemToRemove(null);
+      setRemovingItemId(itemToRemove.id);
+      const success = await removeItem(itemToRemove.barcode);
+      if (success) {
+        setItemToRemove(null);
+      }
+      setRemovingItemId(null);
     }
   };
+
+  if (loading && items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+        <h3 className="text-lg font-medium">Loading cart...</h3>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -67,32 +81,18 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
               <div className="text-sm font-medium">{item.name}</div>
             </div>
             <div className="col-span-3 text-right">
-              {formatCurrency(item.price)}
+              {typeof item.price === 'number'
+                ? formatCurrency(item.price)
+                : formatCurrency(parseFloat(item.price.toString()))}
             </div>
             <div className="col-span-2 flex justify-center items-center space-x-1">
-              {/* {!viewOnly && (
-                <button
-                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                  disabled={removeMode}
-                  className="w-6 h-6 flex items-center justify-center rounded border"
-                >
-                  -
-                </button>
-              )} */}
               <span className="w-6 text-center">{item.quantity}</span>
-              {/* {!viewOnly && (
-                <button
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                  disabled={removeMode}
-                  className="w-6 h-6 flex items-center justify-center rounded border"
-                >
-                  +
-                </button>
-              )} */}
             </div>
             <div className="col-span-2 flex items-center justify-end space-x-2">
               <span className="font-medium">
-                {formatCurrency(item.price * item.quantity)}
+                {typeof item.price === 'number'
+                  ? formatCurrency(item.price * item.quantity)
+                  : formatCurrency(parseFloat(item.price.toString()) * item.quantity)}
               </span>
               
               {!viewOnly && (
@@ -100,9 +100,14 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6 rounded-full text-error"
-                  onClick={() => handleRemoveClick(item.id, item.name)}
+                  onClick={() => handleRemoveClick(item.id, item.name, item.barcode)}
+                  disabled={loading || removingItemId === item.id}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  {removingItemId === item.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
                 </Button>
               )}
             </div>
@@ -124,4 +129,3 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
 };
 
 export default CartItemList;
-

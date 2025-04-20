@@ -6,33 +6,57 @@ import { QrCode, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import QRScanner from "@/components/shared/QRScanner";
 import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const Welcome: React.FC = () => {
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user, startCartSession } = useAuth();
+  const { toast: useToastFn } = useToast();
 
-  const handleScanComplete = (result: string) => {
+  const handleScanComplete = async (result: string) => {
     setIsQrScannerOpen(false);
     setIsConnecting(true);
 
-    // Simulate connection process
-    setTimeout(() => {
-      // Get cart ID from the QR code (format: CART-123)
-      const cartId = result;
-      // Show success toast
-      toast({
-        title: "Connected successfully",
-        description: `You are now connected to ${cartId}`,
-      });
-
-      // Navigate to the cart connected screen
-      navigate("/customer/connected", { state: { cartId } });
+    try {
+      // Extract cart ID from QR code result
+      // Expecting format like: https://qout.com/CART-123 or just CART-123
+      const cartIdMatch = result.match(/CART-(\d+)/);
+      if (!cartIdMatch) {
+        toast.error("Invalid QR code format");
+        setIsConnecting(false);
+        return;
+      }
       
+      const cartId = cartIdMatch[0]; // Full CART-123 format
+      
+      // Start a cart session
+      const sessionResult = await startCartSession(cartId);
+      
+      if (sessionResult) {
+        // Show success toast
+        useToastFn({
+          title: "Connected successfully",
+          description: `You are now connected to ${cartId}`,
+        });
+        
+        // Navigate to the cart connected screen
+        navigate("/customer/connected", { 
+          state: { 
+            cartId: sessionResult.cartId,
+            sessionId: sessionResult.sessionId
+          }
+        });
+      } else {
+        toast.error("Failed to connect to cart");
+      }
+    } catch (error) {
+      console.error("Error connecting to cart:", error);
+      toast.error("Failed to connect to cart");
+    } finally {
       setIsConnecting(false);
-    }, 1500);
+    }
   };
 
   return (

@@ -1,7 +1,9 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Outlet, Navigate } from "react-router-dom";
 import { UserRole } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 interface MainLayoutProps {
   requiredRole?: UserRole | UserRole[];
@@ -10,10 +12,17 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ requiredRole }) => {
   const { user, isAuthenticated, loading } = useAuth();
 
-  console.log(user, isAuthenticated, "main layout");
-
   // Wait for the loading state to complete before rendering
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If no role is required, render the outlet
   if (!requiredRole) return <Outlet />;
@@ -31,7 +40,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ requiredRole }) => {
     console.log(`User role ${user?.user?.role} doesn't match required role ${requiredRole}`);
     switch (user?.user?.role) {
       case "customer":
-        // if (user.cartId) return <Navigate to="/cart" />;
         return <Navigate to="/customer" />;
       case "manager":
         return <Navigate to="/admin" />;
