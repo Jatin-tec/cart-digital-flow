@@ -1,8 +1,9 @@
+
 "use client"
 
 import * as React from "react"
 import { TrendingUp } from "lucide-react"
-import { Label, Pie, PieChart } from "recharts"
+import { Label, Pie, PieChart, ResponsiveContainer } from "recharts"
 
 import {
   Card,
@@ -10,7 +11,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import {
   ChartConfig,
@@ -18,71 +18,76 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 190, fill: "var(--color-other)" },
-]
+
+const generateRandomData = () => [
+  { category: "Groceries", value: Math.floor(Math.random() * 300) + 200, fill: "#8884d8" },
+  { category: "Electronics", value: Math.floor(Math.random() * 250) + 150, fill: "#82ca9d" },
+  { category: "Clothing", value: Math.floor(Math.random() * 200) + 100, fill: "#ffc658" },
+  { category: "Home", value: Math.floor(Math.random() * 150) + 50, fill: "#ff7300" },
+];
 
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
+  sales: {
+    label: "Sales Distribution",
   },
-  chrome: {
-    label: "Chrome",
+  Groceries: {
+    label: "Groceries",
     color: "hsl(var(--chart-1))",
   },
-  safari: {
-    label: "Safari",
+  Electronics: {
+    label: "Electronics",
     color: "hsl(var(--chart-2))",
   },
-  firefox: {
-    label: "Firefox",
+  Clothing: {
+    label: "Clothing",
     color: "hsl(var(--chart-3))",
   },
-  edge: {
-    label: "Edge",
+  Home: {
+    label: "Home",
     color: "hsl(var(--chart-4))",
-  },
-  other: {
-    label: "Other",
-    color: "hsl(var(--chart-5))",
   },
 } satisfies ChartConfig
 
 export default function Pchart() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0)
-  }, [])
+  const [chartData, setChartData] = React.useState(generateRandomData());
+  const totalValue = React.useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.value, 0)
+  }, [chartData])
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setChartData(generateRandomData());
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Card className="flex flex-col">
-      <CardHeader className="items-center pb-0">
-        {/* <CardTitle>Pie Chart - Donut with Text</CardTitle> */}
-        <CardDescription>January - June 2024</CardDescription>
+      <CardHeader className="items-center pb-2">
+        <CardDescription>Sales Distribution</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
+      <CardContent className="flex-1 pb-4">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+          className="mx-auto aspect-square h-[200px]"
         >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
-              innerRadius={60}
-              strokeWidth={5}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+          <ResponsiveContainer>
+            <PieChart>
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent />}
+              />
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="category"
+                innerRadius={60}
+                outerRadius={80}
+              >
+                <Label
+                  content={({ viewBox }) => {
+                    if (!viewBox || !('cx' in viewBox) || !('cy' in viewBox)) return null;
                     return (
                       <text
                         x={viewBox.cx}
@@ -93,32 +98,32 @@ export default function Pchart() {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          className="fill-foreground text-xl font-bold"
                         >
-                          {totalVisitors.toLocaleString()}
+                          ${totalValue.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
+                          y={(viewBox.cy || 0) + 20}
+                          className="fill-muted-foreground text-xs"
                         >
-                          Visitors
+                          Total Sales
                         </tspan>
                       </text>
-                    )
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
+                    );
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          Trending up by 8.3% this month <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          Real-time sales distribution
         </div>
       </CardFooter>
     </Card>
