@@ -3,12 +3,13 @@ services:
     build: .
     container_name: nextapp
     ports:
-      - "4173:4173"
+      - 4173:4173
+    restart: always
     volumes:
       - .:/app
       - /app/node_modules
-    stdin_open: true
-    tty: true
+    env_file:
+      - ./.env
   
   nginx:
     restart: always
