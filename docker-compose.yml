@@ -1,22 +1,27 @@
 services:
   nextapp:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile 
     container_name: nextapp
     ports:
-      - 4173:4173
+      - "4173:4173"
     restart: always
     volumes:
       - .:/app
       - /app/node_modules
     env_file:
       - ./.env
+    environment:
+      - PORT=4173
   
   nginx:
     restart: always
     build:
       context: ./nginx
+      dockerfile: Dockerfile
     container_name: nginx
     ports:
-      - 80:80
+      - "80:80"
     depends_on:
       - nextapp
