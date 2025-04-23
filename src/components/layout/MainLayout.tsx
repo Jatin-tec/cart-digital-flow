@@ -37,7 +37,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ requiredRole }) => {
 
   if (!hasRequiredRole) {
     // Redirect to appropriate page based on user role
-    console.log(`User role ${user?.user?.role} doesn't match required role ${requiredRole}`);
     switch (user?.user?.role) {
       case "customer":
         return <Navigate to="/customer" />;

@@ -22,7 +22,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ isOpen, onClose, onScan
     const timer = setTimeout(() => {
       setIsLoading(false);
       setHasPermission(true);
-    }, 1500);
+    }, 5000);
 
     return () => {
       clearTimeout(timer);
@@ -36,7 +36,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ isOpen, onClose, onScan
 
     const timer = setTimeout(() => {
       // Simulated successful scan with a random barcode from our products
-      const barcodes = ["7890123456", "7890123457", "7890123458", "7890123459", "7890123460"];
+      const barcodes = ["40573004", "41083884", "86483970", "12368547", "98651400"];
       const randomBarcode = barcodes[Math.floor(Math.random() * barcodes.length)];
       onScan(randomBarcode);
     }, 3000);
