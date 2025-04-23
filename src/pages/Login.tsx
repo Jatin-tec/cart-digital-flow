@@ -26,20 +26,16 @@ const Login: React.FC = () => {
     if (response) {
       switch (response.user.role) {
         case "customer":
-          // if (user.cartId) {
-          //   navigate("/cart")
-          //   break
-          // };
           navigate("/customer")
           break;
         case "manager":
-          console.log(response.user.role);
           navigate("/admin/dashboard");
           break;
       }
     } else {
       setError("Invalid email or password");
     }
+    setIsLoading(false);
   };
 
   return (
@@ -87,9 +83,8 @@ const Login: React.FC = () => {
             <div className="text-sm text-gray-500 mt-2">
               <p>Demo Credentials:</p>
               <ul className="list-disc pl-5">
-                <li>Customer: customer@example.com / customer</li>
-                <li>Cart: customercart@example.com / cart</li>
-                <li>Admin: admin@example.com / admin</li>
+                <li>Customer: jatin@gmail.com / 1234</li>
+                <li>Admin: admin@gmail.com / 1234</li>
               </ul>
             </div>
           </form>

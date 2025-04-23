@@ -27,12 +27,12 @@ export const getAllProducts = async (): Promise<Product[]> => {
         'Authorization': `Bearer ${user.tokens.access}`
       }
     });
-    
+
     if (!response.ok) {
       console.error('API error:', response.status, response.statusText);
       return [];
     }
-    
+
     const data = await response.json();
     return data;
   } catch (error) {
@@ -43,10 +43,34 @@ export const getAllProducts = async (): Promise<Product[]> => {
 
 // Get product by barcode
 export const getProductByBarcode = async (barcode: string): Promise<Product | null> => {
+  const url = `${import.meta.env.VITE_API_HOST}/api/product/${barcode}/`;
+  const item = localStorage.getItem('user');
+  
   try {
-    const products = await getAllProducts();
-    const product = products.find(p => p.barcode.toString() === barcode);
-    return product || null;
+    const user = item ? JSON.parse(item) : null;
+
+    if (!user || !user.tokens) {
+      console.error('No user found in localStorage or invalid user data');
+      return null;
+    }
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${user.tokens.access}`
+      }
+    })
+    if (!response.ok) {
+      console.error('API error:', response.status, response.statusText);
+      return null;
+    }
+    const data = await response.json();
+
+    if (data.length === 0) {
+      console.error('No product found with the given barcode');
+      return null;
+    }
+    return data[0];
   } catch (error) {
     console.error('Error fetching product by barcode:', error);
     return null;

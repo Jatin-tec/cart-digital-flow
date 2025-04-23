@@ -6,23 +6,33 @@ import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import CartItemList from "@/components/shared/CartItemList";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
-  const { totalPrice, items } = useCart();
+  const { totalPrice, items, removeItem, loading, checkout } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleBackToShopping = () => {
     navigate("/customer/shopping");
   };
 
-  const handleConfirmCheckout = () => {
+  const handleConfirmCheckout = async () => {
     setIsProcessing(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      navigate("/customer/confirmation");
-    }, 2000);
+    try {
+      const success = await checkout();
+      if (success) {
+        toast.success("Checkout successful!");
+        navigate("/customer/confirmation");
+      } else {
+        toast.error("Checkout failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error during checkout:", error);
+      toast.error("An error occurred during checkout.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const tax = totalPrice * 0.1;
@@ -52,7 +62,7 @@ const Checkout: React.FC = () => {
             </div>
 
             <div className="divide-y">
-              <CartItemList viewOnly />
+              <CartItemList viewOnly={true}  items={items} removeItem={removeItem} loading={loading}/>
             </div>
 
             <div className="p-4 bg-neutral-light border-t space-y-2">

@@ -109,15 +109,8 @@ export const CartDeviceProvider = ({ children }: { children: ReactNode }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ barcode }),
       });
-      if (!response.ok) {
-        toast.error("Failed to remove item (cart)");
-        return false;
-      }
-      await refreshCartItems();
-      toast.success("Item removed (cart)");
       return true;
     } catch (err) {
-      toast.error("Failed to remove item (cart)");
       return false;
     } finally {
       setLoading(false);

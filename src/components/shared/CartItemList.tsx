@@ -26,9 +26,7 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false, items, re
     if (itemToRemove) {
       setRemovingItemId(itemToRemove.id);
       const success = await removeItem(itemToRemove.barcode);
-      if (success) {
-        setItemToRemove(null);
-      }
+      if (success) setItemToRemove(null);
       setRemovingItemId(null);
     }
   };

@@ -25,6 +25,7 @@ interface CartContextType {
   removeMode: boolean;
   toggleRemoveMode: () => void;
   refreshCartItems: () => Promise<void>;
+  checkout: () => Promise<boolean>;
   loading: boolean;
 }
 
@@ -167,6 +168,39 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  const checkout = async () => {
+    if (!user?.cart?.sessionId) {
+      toast.error("No active cart session");
+      return false;
+    }
+    setLoading(true);
+    try {
+      const url = `${import.meta.env.VITE_API_HOST}/api/cart/session/${user.cart.sessionId}/checkout/`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.tokens.access}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.detail || "Failed to checkout");
+        return false;
+      }
+      
+      toast.success("Checkout successful");
+      return true;
+    } catch (error) {
+      console.error("Error during checkout:", error);
+      toast.error("Failed to checkout");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const clearCart = () => {
     setItems([]);
   };
@@ -184,6 +218,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     addItem,
     removeItem,
     updateQuantity,
+    checkout,
     clearCart,
     totalItems,
     totalPrice,

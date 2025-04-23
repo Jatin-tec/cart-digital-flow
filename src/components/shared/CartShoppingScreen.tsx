@@ -1,27 +1,18 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   ShoppingCart as ShoppingCartIcon,
   Barcode,
-  Bell,
-  Camera,
-  Trash2,
   CreditCard,
   Loader2,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
-import { useCartDevice } from "@/contexts/CartDeviceContext";
 import CartItemList from "@/components/shared/CartItemList";
 import BarcodeScanner from "@/components/shared/BarcodeScanner";
-import ItemDetailsModal from "@/components/shared/ItemDetailsModal";
 import AssistanceRequestModal from "@/components/shared/AssistanceRequestModal";
-import { getProductByBarcode } from "@/services/productService";
-import { Product } from "@/services/productService";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import useCartOperations from "@/hooks/useCartOperations";
 
 interface CartShoppingScreenProps {
   isCartDisplay?: boolean;
@@ -30,70 +21,32 @@ interface CartShoppingScreenProps {
 const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const {
+    cart,
+    cartItems,
+    totalItems,
+    totalPrice,
+    loading,
+    addItem,
+    removeItem,
+    refreshCartItems,
+    setCartSessionId,
+  } = useCartOperations(isCartDisplay, location);
 
-  let cart, addItem, removeItem, totalItems, totalPrice, refreshCartItems, loading;
-  let setCartSessionId;
-  let cartSessionId = null;
-  let cartItems = [];
-
-  // Select the correct context depending on mode
-  if (isCartDisplay) {
-    // Cart Device UI
-    const device = useCartDevice();
-    console.log(device)
-    addItem = device.addItem;
-    removeItem = device.removeItem;
-    totalItems = device.totalItems;
-    totalPrice = device.totalPrice;
-    refreshCartItems = device.refreshCartItems;
-    loading = device.loading;
-    setCartSessionId = device.setCartSessionId;
-    cartSessionId = device.cartSessionId;
-    cart = location.state?.cartId || device.cartSessionId || "Unknown";
-    cartItems = device.items;
-  } else {
-    // Customer/mobile UI
-    const customer = useCart();
-    addItem = customer.addItem;
-    removeItem = customer.removeItem;
-    totalItems = customer.totalItems;
-    totalPrice = customer.totalPrice;
-    refreshCartItems = customer.refreshCartItems;
-    loading = customer.loading;
-    cart = user?.cart?.cartId || location.state?.cartId || "Unknown";
-    cartItems = customer.items;
-  }
-
-  // Set cart session id for CartDevice context from navigation.state
   useEffect(() => {
     if (isCartDisplay && setCartSessionId && location.state?.sessionId) {
       setCartSessionId(location.state.sessionId);
     }
-    // Only want to do this once on mount or if sessionId changes
-    // eslint-disable-next-line
-  }, [isCartDisplay, location.state?.sessionId]);
-
+  }, [isCartDisplay, location.state?.sessionId, setCartSessionId]);
 
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isAssistanceModalOpen, setIsAssistanceModalOpen] = useState(false);
-  const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
 
   const handleScan = async (barcode: string) => {
     setIsScannerOpen(false);
     try {
-      let added: boolean = false;
-      // Both contexts return boolean
-      added = await addItem(barcode, 1);
-      if (added) return;
-      const product = await getProductByBarcode(barcode);
-      if (product) {
-        setScannedProduct(product);
-        setIsProductModalOpen(true);
-      } else {
-        toast.error("Product not found");
-      }
+      const added = await addItem(barcode, 1);
+      if (!added) toast.error("Something went wrong");
     } catch (error) {
       console.error("Error scanning product:", error);
       toast.error("Error scanning product");
@@ -125,9 +78,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
                 <span className="font-medium">Your Cart</span>
               </div>
               <div className="flex items-center">
-                {loading && (
-                  <span className="animate-spin h-4 w-4 mr-2">⏳</span>
-                )}
+                {loading && <Loader2 className="animate-spin h-4 w-4 mr-2" />}
                 <span className="text-sm">{totalItems} items</span>
               </div>
             </div>
@@ -157,28 +108,20 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
         </div>
 
         <div className="sticky bottom-0 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-          <div className="max-w-2xl w-full mx-auto p-4 grid grid-cols-3 gap-3">
-            <Button
-              variant="destructive"
-              className="flex flex-col items-center justify-center h-16"
-              onClick={() => {}} // Optionally support remove mode
-              disabled={false}
-            >
-              <span>Remove Mode</span>
-            </Button>
+          <div className="max-w-2xl w-full mx-auto p-4 grid grid-cols-2 gap-3">
             <Button
               variant="outline"
               className="flex flex-col items-center justify-center h-16"
               onClick={() => setIsAssistanceModalOpen(true)}
             >
-              <span>Assistance</span>
+              Assistance
             </Button>
             <Button
               variant="outline"
               className="flex flex-col items-center justify-center h-16"
-              disabled={true}
+              disabled
             >
-              <span>Cart View</span>
+              Cart View
             </Button>
           </div>
           <div className="max-w-2xl w-full mx-auto p-4 grid grid-cols-2 gap-3">
@@ -206,11 +149,6 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScan={handleScan}
-      />
-      <ItemDetailsModal
-        product={scannedProduct}
-        isOpen={isProductModalOpen}
-        onClose={() => setIsProductModalOpen(false)}
       />
       <AssistanceRequestModal
         isOpen={isAssistanceModalOpen}
