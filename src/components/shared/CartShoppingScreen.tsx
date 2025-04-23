@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,6 @@ import { Product } from "@/services/productService";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 
-// Props allow this component to be used by both customer and cart UIs
 interface CartShoppingScreenProps {
   isCartDisplay?: boolean;
 }
@@ -46,28 +44,87 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [cartSessionId, setCartSessionId] = useState<number | null>(null);
 
-  // Initial cart refresh
+  const cartId =
+    user?.cart?.cartId ||
+    location.state?.cartId ||
+    "Unknown";
+
   useEffect(() => {
-    const loadCartData = async () => {
-      setIsRefreshing(true);
-      try {
-        await refreshCartItems();
-      } catch (error) {
-        console.error("Error refreshing cart data:", error);
-      } finally {
-        setIsRefreshing(false);
+    // For the cart display device, get sessionId from state
+    if (isCartDisplay && location.state?.sessionId) {
+      setCartSessionId(location.state.sessionId);
+    }
+  }, [isCartDisplay, location.state]);
+
+  // Poll cart items every 2 seconds on the cart device
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+    if (isCartDisplay && cartSessionId) {
+      // Poll backend for latest cart items
+      pollInterval = setInterval(() => {
+        refreshCartItemsForCartDevice(cartSessionId);
+      }, 2000);
+    }
+    return () => pollInterval && clearInterval(pollInterval);
+    // eslint-disable-next-line
+  }, [isCartDisplay, cartSessionId]);
+
+  const refreshCartItemsForCartDevice = async (sessionId: number) => {
+    setIsRefreshing(true);
+    try {
+      const url = `${import.meta.env.VITE_API_HOST}/api/cart/session/${sessionId}/`;
+      const response = await fetch(url, { method: "GET" });
+      if (!response.ok) return;
+      const session = await response.json();
+      // Set items for cart device mode (this is a hack: add to localStorage for demo, better to refactor cart context for dual mode)
+      localStorage.setItem("__cart_device_items", JSON.stringify(session.items || []));
+      // You could implement a useState here for internal-only items on cart but that's a bigger refactor
+    } catch (err) {
+      toast.error("Failed to refresh cart (cart device)");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const addItemForCartDevice = async (barcode: string, quantity: number = 1) => {
+    if (!cartSessionId) {
+      toast.error("No cart session found");
+      return false;
+    }
+    try {
+      const url = `${import.meta.env.VITE_API_HOST}/api/cart/session/${cartSessionId}/add/`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ barcode, quantity }),
+      });
+      if (!response.ok) {
+        toast.error("Failed to add item (cart)");
+        return false;
       }
-    };
-    loadCartData();
-  }, []);
+      // get latest items
+      await refreshCartItemsForCartDevice(cartSessionId);
+      toast.success("Item added (cart)");
+      return true;
+    } catch (err) {
+      toast.error("Failed to add item (cart)");
+      return false;
+    }
+  };
 
   const handleScan = async (barcode: string) => {
     setIsScannerOpen(false);
     try {
-      const added = await addItem(barcode, 1);
+      let added: boolean = false;
+      if (isCartDisplay) {
+        added = await addItemForCartDevice(barcode, 1);
+      } else {
+        // useCart context in customer UI remains unchanged
+        added = await (await import("@/contexts/CartContext")).useCart().addItem(barcode, 1);
+      }
       if (added) return;
-      // If adding to cart failed, try to get product details
       const product = await getProductByBarcode(barcode);
       if (product) {
         setScannedProduct(product);
@@ -83,18 +140,11 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
 
   const handleCheckout = () => {
     if (isCartDisplay) {
-      // For the cart device, optionally show a notice or modal (maybe checkout is not available)
       toast.info("Checkout only available from customer app.");
     } else {
       navigate("/customer/checkout");
     }
   };
-
-  // Use cart ID flexibly based on which UI
-  const cartId =
-    user?.cart?.cartId ||
-    location.state?.cartId ||
-    "Unknown";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -120,7 +170,6 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
                 <span className="text-sm">{totalItems} items</span>
               </div>
             </div>
-
             <div className="divide-y">
               <CartItemList />
             </div>
@@ -152,7 +201,6 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
               <Trash2 className="h-6 w-6 mb-1" />
               <span className="text-xs">{removeMode ? "Cancel" : "Remove"}</span>
             </Button>
-            
             <Button
               variant="outline"
               className="flex flex-col items-center justify-center h-16"
@@ -161,17 +209,15 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
               <Bell className="h-6 w-6 mb-1" />
               <span className="text-xs">Assistance</span>
             </Button>
-            
             <Button
               variant="outline"
               className="flex flex-col items-center justify-center h-16"
-              disabled={true} // Cart camera mode - implement if needed
+              disabled={true}
             >
               <Camera className="h-6 w-6 mb-1" />
               <span className="text-xs">Cart View</span>
             </Button>
           </div>
-          
           <div className="max-w-2xl w-full mx-auto p-4 grid grid-cols-2 gap-3">
             <Button
               variant="outline"
@@ -182,7 +228,6 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
               <Barcode className="mr-2 h-5 w-5" />
               Scan Item
             </Button>
-            
             <Button
               className="flex items-center justify-center h-12"
               onClick={handleCheckout}
@@ -194,19 +239,16 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
           </div>
         </div>
       </main>
-
       <BarcodeScanner
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScan={handleScan}
       />
-
       <ItemDetailsModal
         product={scannedProduct}
         isOpen={isProductModalOpen}
         onClose={() => setIsProductModalOpen(false)}
       />
-
       <AssistanceRequestModal
         isOpen={isAssistanceModalOpen}
         onClose={() => setIsAssistanceModalOpen(false)}

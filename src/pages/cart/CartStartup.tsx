@@ -1,20 +1,42 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from 'react-router-dom';
-import { QrCode } from "lucide-react";
-import {QRCodeSVG} from 'qrcode.react';
 
-const uniqueId = Math.floor(100 + Math.random() * 900);
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from 'react-router-dom';
+import { QrCode } from "lucide-react";
+import { QRCodeSVG } from 'qrcode.react';
+
+// Utility function to check for an active cart session
+const checkActiveSession = async (cartId: string) => {
+  const url = `${import.meta.env.VITE_API_HOST}/api/cart/active-session/${cartId}/`;
+  try {
+    const response = await fetch(url, { method: "GET" });
+    if (!response.ok) return null;
+    const data = await response.json();
+    // Assume the backend returns: { id: number, ... } or null if no active session
+    return data && data.id ? data : null;
+  } catch (err) {
+    console.error("Error checking for active session:", err);
+    return null;
+  }
+};
 
 const CartStartup: React.FC = () => {
-
   const { cart_id } = useParams();
+  const navigate = useNavigate();
 
-  console.log(cart_id)
-
-  // const [qrCode, setQrCode] = useState<string>("");
-
-  // In a real app, this would generate an actual QR code
-  // For this demo, we'll just show the cart ID
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    if (cart_id) {
+      // Poll for an active session every 2 seconds
+      intervalId = setInterval(async () => {
+        const session = await checkActiveSession(cart_id);
+        if (session && session.id) {
+          // Navigate to CartLoggedIn with session state (sessionId and cartId)
+          navigate("/cart/logged-in", { state: { sessionId: session.id, cartId: cart_id } });
+        }
+      }, 2000);
+    }
+    return () => intervalId && clearInterval(intervalId);
+  }, [cart_id, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-dark text-white">
@@ -39,9 +61,8 @@ const CartStartup: React.FC = () => {
             </div>
 
             <div className="w-64 h-64 border-2 border-primary-light rounded-lg flex items-center justify-center">
-              {/* This would be a real QR code in production */}
               <div className="text-lg font-bold">
-              <QRCodeSVG value={cart_id} size={200} />
+                <QRCodeSVG value={`/cart/startup/${cart_id}`} size={200} />
               </div>
             </div>
 
@@ -64,3 +85,4 @@ const CartStartup: React.FC = () => {
 };
 
 export default CartStartup;
+
