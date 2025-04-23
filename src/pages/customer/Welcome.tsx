@@ -7,27 +7,48 @@ import { useAuth } from "@/contexts/AuthContext";
 import QRScanner from "@/components/shared/QRScanner";
 import { toast } from "sonner";
 
+const extractCartId = (scanResult: string): string | null => {
+  // Accepts just a cart code (CART-XXX) or a URL with /cart/startup/CART-XXX
+  let match;
+  // If it's a URL containing the cart code, match it
+  match = scanResult.match(/cart\/startup\/(CART-\d+)/i);
+  if (match) {
+    return match[1];
+  }
+  // If it's just the plain cart code
+  match = scanResult.match(/CART-\d+/i);
+  if (match) {
+    return match[0];
+  }
+  return null;
+};
+
 const Welcome: React.FC = () => {
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
   const { user, startCartSession } = useAuth();
 
-  const handleScanComplete = async (cartId: string) => {
+  const handleScanComplete = async (scanResult: string) => {
     setIsQrScannerOpen(false);
     setIsConnecting(true);
+
+    const cartId = extractCartId(scanResult);
+
+    if (!cartId) {
+      toast.error("Invalid QR code: could not extract cart ID");
+      setIsConnecting(false);
+      return;
+    }
 
     try {
       // Start a cart session
       const sessionResult = await startCartSession(cartId);
-      
+
       if (sessionResult) {
-        // Show success toast
         toast.success(`You are now connected to ${cartId}`);
-        
-        // Navigate to the cart connected screen
-        navigate("/customer/connected", { 
-          state: { 
+        navigate("/customer/connected", {
+          state: {
             cartId: sessionResult.cartId,
             sessionId: sessionResult.sessionId
           }
@@ -94,3 +115,4 @@ const Welcome: React.FC = () => {
 };
 
 export default Welcome;
+
