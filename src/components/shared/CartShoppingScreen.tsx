@@ -41,6 +41,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
   if (isCartDisplay) {
     // Cart Device UI
     const device = useCartDevice();
+    console.log(device)
     addItem = device.addItem;
     removeItem = device.removeItem;
     totalItems = device.totalItems;
@@ -85,9 +86,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
       let added: boolean = false;
       // Both contexts return boolean
       added = await addItem(barcode, 1);
-
       if (added) return;
-
       const product = await getProductByBarcode(barcode);
       if (product) {
         setScannedProduct(product);
@@ -135,6 +134,8 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
             <div className="divide-y">
               <CartItemList
                 viewOnly={false}
+                items={cartItems}
+                removeItem={removeItem}
                 loading={loading}
               />
             </div>

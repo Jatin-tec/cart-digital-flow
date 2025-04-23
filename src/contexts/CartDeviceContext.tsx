@@ -37,7 +37,7 @@ export const CartDeviceProvider = ({ children }: { children: ReactNode }) => {
       refreshCartItems(); // Initial load
       interval = setInterval(() => {
         refreshCartItems();
-      }, 2500);
+      }, 10000);
     }
     return () => interval && clearInterval(interval);
     // eslint-disable-next-line

@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
-import { useCartDevice } from "@/contexts/CartDeviceContext";
+import { CartDeviceItem, useCartDevice } from "@/contexts/CartDeviceContext";
 import { Trash2, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
@@ -9,24 +9,13 @@ import RemoveItemModal from "./RemoveItemModal";
 
 interface CartItemListProps {
   viewOnly?: boolean;
+  items: CartDeviceItem[];
+  removeItem: (barcode: string) => Promise<boolean>;
+  loading: boolean;
 }
 
-const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
-  // We'll determine context dynamically based on component hierarchy
-  const cartContext = useCart();
-  const cartDeviceContext = useCartDevice();
-  
-  // Try to use cart context first, and fall back to cartDevice if it fails
-  let contextToUse;
-  try {
-    contextToUse = cartContext;
-  } catch (e) {
-    contextToUse = cartDeviceContext;
-  }
-
-  const { items, removeItem, loading } = contextToUse;
-  
-  const [itemToRemove, setItemToRemove] = useState<{id: string, name: string, barcode: string} | null>(null);
+const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false, items, removeItem, loading }) => {
+  const [itemToRemove, setItemToRemove] = useState<{ id: string, name: string, barcode: string } | null>(null);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
 
   const handleRemoveClick = (id: string, name: string, barcode: string) => {
@@ -82,9 +71,9 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
           >
             <div className="col-span-5 flex items-center space-x-3">
               {item.image ? (
-                <img 
-                  src={item.image} 
-                  alt={item.name} 
+                <img
+                  src={item.image}
+                  alt={item.name}
                   className="w-12 h-12 object-cover rounded-md"
                 />
               ) : (
@@ -104,7 +93,7 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
               <span className="font-medium">
                 {formatCurrency(item.price * item.quantity)}
               </span>
-              
+
               {!viewOnly && (
                 <Button
                   variant="ghost"
