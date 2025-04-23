@@ -52,7 +52,7 @@ const Routes: React.FC = () => {
       {/* Cart Interface routes */}
       <Route path="cart" element={<MainLayout />}>
         <Route index element={<Navigate to="/cart/startup" />} />
-        <Route path="startup" element={<CartStartup />} />
+        <Route path="startup/:cart_id" element={<CartStartup />} />
         <Route path="logged-in" element={<CartLoggedIn />} />
       </Route>
       
