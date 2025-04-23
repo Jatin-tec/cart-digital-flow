@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
   let cart, addItem, removeItem, totalItems, totalPrice, refreshCartItems, loading;
   let setCartSessionId;
   let cartSessionId = null;
+  let cartItems = [];
 
   // Select the correct context depending on mode
   if (isCartDisplay) {
@@ -48,6 +50,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
     setCartSessionId = device.setCartSessionId;
     cartSessionId = device.cartSessionId;
     cart = location.state?.cartId || device.cartSessionId || "Unknown";
+    cartItems = device.items;
   } else {
     // Customer/mobile UI
     const customer = useCart();
@@ -58,6 +61,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
     refreshCartItems = customer.refreshCartItems;
     loading = customer.loading;
     cart = user?.cart?.cartId || location.state?.cartId || "Unknown";
+    cartItems = customer.items;
   }
 
   // Set cart session id for CartDevice context from navigation.state
@@ -130,10 +134,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
             </div>
             <div className="divide-y">
               <CartItemList
-                // For device, use viewOnly false so can remove too
                 viewOnly={false}
-                items={undefined}
-                removeItem={removeItem}
                 loading={loading}
               />
             </div>

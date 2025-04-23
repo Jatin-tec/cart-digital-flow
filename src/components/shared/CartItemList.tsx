@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
+import { useCartDevice } from "@/contexts/CartDeviceContext";
 import { Trash2, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
@@ -11,7 +12,20 @@ interface CartItemListProps {
 }
 
 const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
-  const { items, removeItem, updateQuantity, removeMode, loading } = useCart();
+  // We'll determine context dynamically based on component hierarchy
+  const cartContext = useCart();
+  const cartDeviceContext = useCartDevice();
+  
+  // Try to use cart context first, and fall back to cartDevice if it fails
+  let contextToUse;
+  try {
+    contextToUse = cartContext;
+  } catch (e) {
+    contextToUse = cartDeviceContext;
+  }
+
+  const { items, removeItem, loading } = contextToUse;
+  
   const [itemToRemove, setItemToRemove] = useState<{id: string, name: string, barcode: string} | null>(null);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
 
@@ -81,18 +95,14 @@ const CartItemList: React.FC<CartItemListProps> = ({ viewOnly = false }) => {
               <div className="text-sm font-medium">{item.name}</div>
             </div>
             <div className="col-span-3 text-right">
-              {typeof item.price === 'number'
-                ? formatCurrency(item.price)
-                : formatCurrency(parseFloat(item.price.toString()))}
+              {formatCurrency(item.price)}
             </div>
             <div className="col-span-2 flex justify-center items-center space-x-1">
               <span className="w-6 text-center">{item.quantity}</span>
             </div>
             <div className="col-span-2 flex items-center justify-end space-x-2">
               <span className="font-medium">
-                {typeof item.price === 'number'
-                  ? formatCurrency(item.price * item.quantity)
-                  : formatCurrency(parseFloat(item.price.toString()) * item.quantity)}
+                {formatCurrency(item.price * item.quantity)}
               </span>
               
               {!viewOnly && (
