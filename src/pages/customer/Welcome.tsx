@@ -27,13 +27,11 @@ const Welcome: React.FC = () => {
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
-  const { user, startCartSession } = useAuth();
+  const { startCartSession } = useAuth();
 
-  const handleScanComplete = async (scanResult: string) => {
+  const handleScanComplete = async (cartId: string) => {
     setIsQrScannerOpen(false);
     setIsConnecting(true);
-
-    const cartId = extractCartId(scanResult);
 
     if (!cartId) {
       toast.error("Invalid QR code: could not extract cart ID");

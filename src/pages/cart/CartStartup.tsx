@@ -62,7 +62,7 @@ const CartStartup: React.FC = () => {
 
             <div className="w-64 h-64 border-2 border-primary-light rounded-lg flex items-center justify-center">
               <div className="text-lg font-bold">
-                <QRCodeSVG value={`/cart/startup/${cart_id}`} size={200} />
+                <QRCodeSVG value={cart_id} size={200} />
               </div>
             </div>
 

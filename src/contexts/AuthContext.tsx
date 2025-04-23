@@ -109,8 +109,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const startCartSession = async (cartId: string) => {
-    if (!user) return null;
-    
     try {
       const url = `${import.meta.env.VITE_API_HOST}/api/cart/start/${cartId}/`;
       const response = await fetch(url, {

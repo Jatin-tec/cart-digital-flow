@@ -65,7 +65,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
       // Poll backend for latest cart items
       pollInterval = setInterval(() => {
         refreshCartItemsForCartDevice(cartSessionId);
-      }, 2000);
+      }, 5000);
     }
     return () => pollInterval && clearInterval(pollInterval);
     // eslint-disable-next-line
@@ -74,7 +74,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
   const refreshCartItemsForCartDevice = async (sessionId: number) => {
     setIsRefreshing(true);
     try {
-      const url = `${import.meta.env.VITE_API_HOST}/api/cart/session/${sessionId}/`;
+      const url = `${import.meta.env.VITE_API_HOST}/api/cart/cart/session/${sessionId}/`;
       const response = await fetch(url, { method: "GET" });
       if (!response.ok) return;
       const session = await response.json();
@@ -94,7 +94,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
       return false;
     }
     try {
-      const url = `${import.meta.env.VITE_API_HOST}/api/cart/session/${cartSessionId}/add/`;
+      const url = `${import.meta.env.VITE_API_HOST}/api/cart/cart/session/${cartSessionId}/add/`;
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -12,13 +12,22 @@ interface QRScannerProps {
   onScan: (result: string) => void;
 }
 
+interface scanResult {
+  rawValue: string;
+}
+
+
 const QRScanner: React.FC<QRScannerProps> = ({ isOpen, onClose, onScan }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState(false);
   const [manualCodeValue, setManualCodeValue] = useState("");
 
-  const handleScan = (result) => {
-    
+  const handleScan = (result: scanResult) => {
+    console.log(result);
+    const scanedBarcode = result[0];
+    const cart_id = scanedBarcode?.rawValue;
+    console.log(cart_id);
+    onScan(cart_id)
   }
 
   const handleManualSubmit = (e: React.FormEvent) => {
