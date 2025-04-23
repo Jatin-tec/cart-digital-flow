@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { useCartDevice } from "@/contexts/CartDeviceContext";
 import CartItemList from "@/components/shared/CartItemList";
 import BarcodeScanner from "@/components/shared/BarcodeScanner";
 import ItemDetailsModal from "@/components/shared/ItemDetailsModal";
@@ -29,102 +30,60 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { 
-    totalItems, 
-    totalPrice, 
-    removeMode, 
-    toggleRemoveMode, 
-    addItem,
-    refreshCartItems,
-    loading: cartLoading 
-  } = useCart();
-  
+
+  let cart, addItem, removeItem, totalItems, totalPrice, refreshCartItems, loading;
+  let setCartSessionId;
+  let cartSessionId = null;
+
+  // Select the correct context depending on mode
+  if (isCartDisplay) {
+    // Cart Device UI
+    const device = useCartDevice();
+    addItem = device.addItem;
+    removeItem = device.removeItem;
+    totalItems = device.totalItems;
+    totalPrice = device.totalPrice;
+    refreshCartItems = device.refreshCartItems;
+    loading = device.loading;
+    setCartSessionId = device.setCartSessionId;
+    cartSessionId = device.cartSessionId;
+    cart = location.state?.cartId || device.cartSessionId || "Unknown";
+  } else {
+    // Customer/mobile UI
+    const customer = useCart();
+    addItem = customer.addItem;
+    removeItem = customer.removeItem;
+    totalItems = customer.totalItems;
+    totalPrice = customer.totalPrice;
+    refreshCartItems = customer.refreshCartItems;
+    loading = customer.loading;
+    cart = user?.cart?.cartId || location.state?.cartId || "Unknown";
+  }
+
+  // Set cart session id for CartDevice context from navigation.state
+  useEffect(() => {
+    if (isCartDisplay && setCartSessionId && location.state?.sessionId) {
+      setCartSessionId(location.state.sessionId);
+    }
+    // Only want to do this once on mount or if sessionId changes
+    // eslint-disable-next-line
+  }, [isCartDisplay, location.state?.sessionId]);
+
+
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isAssistanceModalOpen, setIsAssistanceModalOpen] = useState(false);
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [cartSessionId, setCartSessionId] = useState<number | null>(null);
-
-  const cartId =
-    user?.cart?.cartId ||
-    location.state?.cartId ||
-    "Unknown";
-
-  useEffect(() => {
-    // For the cart display device, get sessionId from state
-    if (isCartDisplay && location.state?.sessionId) {
-      setCartSessionId(location.state.sessionId);
-    }
-  }, [isCartDisplay, location.state]);
-
-  // Poll cart items every 2 seconds on the cart device
-  useEffect(() => {
-    let pollInterval: NodeJS.Timeout;
-    if (isCartDisplay && cartSessionId) {
-      // Poll backend for latest cart items
-      pollInterval = setInterval(() => {
-        refreshCartItemsForCartDevice(cartSessionId);
-      }, 5000);
-    }
-    return () => pollInterval && clearInterval(pollInterval);
-    // eslint-disable-next-line
-  }, [isCartDisplay, cartSessionId]);
-
-  const refreshCartItemsForCartDevice = async (sessionId: number) => {
-    setIsRefreshing(true);
-    try {
-      const url = `${import.meta.env.VITE_API_HOST}/api/cart/cart/session/${sessionId}/`;
-      const response = await fetch(url, { method: "GET" });
-      if (!response.ok) return;
-      const session = await response.json();
-      // Set items for cart device mode (this is a hack: add to localStorage for demo, better to refactor cart context for dual mode)
-      localStorage.setItem("__cart_device_items", JSON.stringify(session.items || []));
-      // You could implement a useState here for internal-only items on cart but that's a bigger refactor
-    } catch (err) {
-      toast.error("Failed to refresh cart (cart device)");
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  const addItemForCartDevice = async (barcode: string, quantity: number = 1) => {
-    if (!cartSessionId) {
-      toast.error("No cart session found");
-      return false;
-    }
-    try {
-      const url = `${import.meta.env.VITE_API_HOST}/api/cart/cart/session/${cartSessionId}/add/`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ barcode, quantity }),
-      });
-      if (!response.ok) {
-        toast.error("Failed to add item (cart)");
-        return false;
-      }
-      // get latest items
-      await refreshCartItemsForCartDevice(cartSessionId);
-      toast.success("Item added (cart)");
-      return true;
-    } catch (err) {
-      toast.error("Failed to add item (cart)");
-      return false;
-    }
-  };
 
   const handleScan = async (barcode: string) => {
     setIsScannerOpen(false);
     try {
       let added: boolean = false;
-      if (isCartDisplay) {
-        added = await addItemForCartDevice(barcode, 1);
-      } else {
-        // useCart context in customer UI remains unchanged
-        added = await (await import("@/contexts/CartContext")).useCart().addItem(barcode, 1);
-      }
+      // Both contexts return boolean
+      added = await addItem(barcode, 1);
+
       if (added) return;
+
       const product = await getProductByBarcode(barcode);
       if (product) {
         setScannedProduct(product);
@@ -151,10 +110,9 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-4 flex justify-between items-center">
           <h1 className="text-xl font-semibold text-gray-900">Smart Cart</h1>
-          <div className="text-sm text-gray-600">Cart #{cartId}</div>
+          <div className="text-sm text-gray-600">Cart #{cart}</div>
         </div>
       </header>
-
       <main className="flex-1 flex flex-col bg-neutral-light">
         <div className="flex-1 max-w-2xl w-full mx-auto p-4">
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -164,16 +122,21 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
                 <span className="font-medium">Your Cart</span>
               </div>
               <div className="flex items-center">
-                {(isRefreshing || cartLoading) && (
-                  <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                {loading && (
+                  <span className="animate-spin h-4 w-4 mr-2">⏳</span>
                 )}
                 <span className="text-sm">{totalItems} items</span>
               </div>
             </div>
             <div className="divide-y">
-              <CartItemList />
+              <CartItemList
+                // For device, use viewOnly false so can remove too
+                viewOnly={false}
+                items={undefined}
+                removeItem={removeItem}
+                loading={loading}
+              />
             </div>
-
             <div className="p-4 bg-neutral-light border-t">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-600">Subtotal</span>
@@ -194,28 +157,26 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
         <div className="sticky bottom-0 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
           <div className="max-w-2xl w-full mx-auto p-4 grid grid-cols-3 gap-3">
             <Button
-              variant={removeMode ? "destructive" : "outline"}
+              variant="destructive"
               className="flex flex-col items-center justify-center h-16"
-              onClick={toggleRemoveMode}
+              onClick={() => {}} // Optionally support remove mode
+              disabled={false}
             >
-              <Trash2 className="h-6 w-6 mb-1" />
-              <span className="text-xs">{removeMode ? "Cancel" : "Remove"}</span>
+              <span>Remove Mode</span>
             </Button>
             <Button
               variant="outline"
               className="flex flex-col items-center justify-center h-16"
               onClick={() => setIsAssistanceModalOpen(true)}
             >
-              <Bell className="h-6 w-6 mb-1" />
-              <span className="text-xs">Assistance</span>
+              <span>Assistance</span>
             </Button>
             <Button
               variant="outline"
               className="flex flex-col items-center justify-center h-16"
               disabled={true}
             >
-              <Camera className="h-6 w-6 mb-1" />
-              <span className="text-xs">Cart View</span>
+              <span>Cart View</span>
             </Button>
           </div>
           <div className="max-w-2xl w-full mx-auto p-4 grid grid-cols-2 gap-3">
@@ -223,7 +184,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
               variant="outline"
               className="flex items-center justify-center h-12"
               onClick={() => setIsScannerOpen(true)}
-              disabled={cartLoading}
+              disabled={loading}
             >
               <Barcode className="mr-2 h-5 w-5" />
               Scan Item
@@ -231,7 +192,7 @@ const CartShoppingScreen: React.FC<CartShoppingScreenProps> = ({ isCartDisplay =
             <Button
               className="flex items-center justify-center h-12"
               onClick={handleCheckout}
-              disabled={totalItems === 0 || cartLoading}
+              disabled={totalItems === 0 || loading}
             >
               <CreditCard className="mr-2 h-5 w-5" />
               Checkout
